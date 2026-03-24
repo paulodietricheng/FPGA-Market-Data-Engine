@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 03/22/2026 09:03:36 AM
+// Create Date: 03/24/2026 09:08:13 AM
 // Design Name: 
-// Module Name: Ethernet_Parser
+// Module Name: IPv4_Parser
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,13 +19,16 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-typedef struct packed {
-    logic [47:0] dst_mac;
-    logic [47:0] src_mac;
-    logic [15:0] eth_type;
-} ethernet_t;
+typedef struct packed{
+    logic [3:0] version;
+    logic [3:0] ihl;
+    logic [15:0] length;
+    logic [7:0] protocol;
+    logic [31:0] src_ip;
+    logic [31:0] dst_ip;
+} ipv4_t ;
 
-module Ethernet_Parser #(
+module IPv4_Parser#(
     parameter int BUS_W = 512
     )(
         input logic clk, rst_n,
@@ -40,17 +43,23 @@ module Ethernet_Parser #(
         output logic [BUS_W-1:0] out_tdata,
         output logic out_tvalid,
         output logic out_tlast,
-        output ethernet_t out_eth,
+        output ipv4_t out_ipv4,
         input logic down_tready
     );
 
-    // Header positions
-    localparam int ETH_DST_MAC_LSB = 0;
-    localparam int ETH_DST_MAC_MSB = 47;
-    localparam int ETH_SRC_MAC_LSB = 48;
-    localparam int ETH_SRC_MAC_MSB = 95;
-    localparam int ETH_TYPE_LSB = 96;
-    localparam int ETH_TYPE_MSB = 111;
+    // IPv4 header positions
+    localparam int IPV4_VERSION_LSB = 112;
+    localparam int IPV4_VERSION_MSB = 115;   
+    localparam int IPV4_IHL_LSB = 116;
+    localparam int IPV4_IHL_MSB = 119;  
+    localparam int IPV4_TOTAL_LEN_LSB = 128;
+    localparam int IPV4_TOTAL_LEN_MSB = 143;  
+    localparam int IPV4_PROTOCOL_LSB = 184;
+    localparam int IPV4_PROTOCOL_MSB = 191;  
+    localparam int IPV4_SRC_IP_LSB = 208;
+    localparam int IPV4_SRC_IP_MSB = 239; 
+    localparam int IPV4_DST_IP_LSB = 240;
+    localparam int IPV4_DST_IP_MSB = 271; 
 
     // AXI regs
     logic [BUS_W-1:0] reg_tdata;
@@ -60,13 +69,13 @@ module Ethernet_Parser #(
 
     // Parser state
     logic beat_1;
-    ethernet_t reg_eth;
+    ipv4_t reg_ipv4;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             reg_tvalid <= 1'b0;
             beat_1 <= 1'b1;
-            reg_eth <= '0;
+            reg_ipv4 <= '0;
         end else if (up_tready) begin
             reg_tvalid <= in_tvalid;
 
@@ -74,13 +83,14 @@ module Ethernet_Parser #(
                 reg_tdata <= in_tdata;
                 reg_tlast <= in_tlast;
 
-                if (beat_1) begin
-                    reg_eth.dst_mac <= in_tdata[ETH_DST_MAC_MSB:ETH_DST_MAC_LSB];
-                    reg_eth.src_mac <= in_tdata[ETH_SRC_MAC_MSB:ETH_SRC_MAC_LSB];
-                    reg_eth.eth_type <= in_tdata[ETH_TYPE_MSB:ETH_TYPE_LSB];
-                end
-
-                // Correct beat tracking
+            if (beat_1) begin
+                reg_ipv4.version <= in_tdata[IPV4_VERSION_MSB:IPV4_VERSION_LSB];
+                reg_ipv4.ihl <= in_tdata[IPV4_IHL_MSB:IPV4_IHL_LSB];
+                reg_ipv4.length <= in_tdata[IPV4_TOTAL_LEN_MSB:IPV4_TOTAL_LEN_LSB];
+                reg_ipv4.protocol <= in_tdata[IPV4_PROTOCOL_MSB:IPV4_PROTOCOL_LSB];
+                reg_ipv4.src_ip <= in_tdata[IPV4_SRC_IP_MSB:IPV4_SRC_IP_LSB];
+                reg_ipv4.dst_ip <= in_tdata[IPV4_DST_IP_MSB:IPV4_DST_IP_LSB];
+            end
                 beat_1 <= in_tlast;
             end
         end
@@ -90,6 +100,6 @@ module Ethernet_Parser #(
     assign out_tdata = reg_tdata;
     assign out_tvalid = reg_tvalid;
     assign out_tlast = reg_tlast;
-    assign out_eth = reg_eth;
+    assign out_ipv4 = reg_ipv4;
 
 endmodule

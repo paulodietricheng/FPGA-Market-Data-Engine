@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 03/22/2026 09:03:36 AM
+// Create Date: 03/24/2026 08:24:55 AM
 // Design Name: 
-// Module Name: Ethernet_Parser
+// Module Name: UDP_Parser
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,37 +20,45 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 typedef struct packed {
-    logic [47:0] dst_mac;
-    logic [47:0] src_mac;
-    logic [15:0] eth_type;
-} ethernet_t;
+    logic [15:0] src_port;
+    logic [15:0] dst_port;
+    logic [15:0] length;
+    logic [15:0] checksum;
+} udp_t;
 
-module Ethernet_Parser #(
-    parameter int BUS_W = 512
+
+module UDP_Parser #(
+    parameter int BUS_W = 512,
+    parameter int ETHERNET_W = 112,
+    parameter int IPv4_W = 160
     )(
-        input logic clk, rst_n,
+        input  logic clk, rst_n, // Signals
             
         // Upstream
         input logic [BUS_W-1:0] in_tdata,
         input logic in_tvalid,
         input logic in_tlast,
         output logic up_tready,
-        
+    
         // Downstream
         output logic [BUS_W-1:0] out_tdata,
         output logic out_tvalid,
         output logic out_tlast,
-        output ethernet_t out_eth,
+        output udp_t out_udp,
         input logic down_tready
     );
 
-    // Header positions
-    localparam int ETH_DST_MAC_LSB = 0;
-    localparam int ETH_DST_MAC_MSB = 47;
-    localparam int ETH_SRC_MAC_LSB = 48;
-    localparam int ETH_SRC_MAC_MSB = 95;
-    localparam int ETH_TYPE_LSB = 96;
-    localparam int ETH_TYPE_MSB = 111;
+    // UDP field positions
+    localparam int UDP_BASE = ETHERNET_W + IPv4_W;
+
+    localparam int UDP_SRC_PORT_LSB = UDP_BASE + 0;
+    localparam int UDP_SRC_PORT_MSB = UDP_BASE + 15;
+    localparam int UDP_DST_PORT_LSB = UDP_BASE + 16;
+    localparam int UDP_DST_PORT_MSB = UDP_BASE + 31;
+    localparam int UDP_LEN_LSB = UDP_BASE + 32;
+    localparam int UDP_LEN_MSB = UDP_BASE + 47;
+    localparam int UDP_CSUM_LSB = UDP_BASE + 48;
+    localparam int UDP_CSUM_MSB = UDP_BASE + 63;
 
     // AXI regs
     logic [BUS_W-1:0] reg_tdata;
@@ -60,13 +68,13 @@ module Ethernet_Parser #(
 
     // Parser state
     logic beat_1;
-    ethernet_t reg_eth;
+    udp_t reg_udp;
 
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             reg_tvalid <= 1'b0;
             beat_1 <= 1'b1;
-            reg_eth <= '0;
+            reg_udp <= '0;
         end else if (up_tready) begin
             reg_tvalid <= in_tvalid;
 
@@ -75,21 +83,22 @@ module Ethernet_Parser #(
                 reg_tlast <= in_tlast;
 
                 if (beat_1) begin
-                    reg_eth.dst_mac <= in_tdata[ETH_DST_MAC_MSB:ETH_DST_MAC_LSB];
-                    reg_eth.src_mac <= in_tdata[ETH_SRC_MAC_MSB:ETH_SRC_MAC_LSB];
-                    reg_eth.eth_type <= in_tdata[ETH_TYPE_MSB:ETH_TYPE_LSB];
+                    reg_udp.src_port <= in_tdata[UDP_SRC_PORT_MSB:UDP_SRC_PORT_LSB];
+                    reg_udp.dst_port <= in_tdata[UDP_DST_PORT_MSB:UDP_DST_PORT_LSB];
+                    reg_udp.length <= in_tdata[UDP_LEN_MSB:UDP_LEN_LSB];
+                    reg_udp.checksum <= in_tdata[UDP_CSUM_MSB:UDP_CSUM_LSB];
                 end
 
-                // Correct beat tracking
+                // First-beat tracking
                 beat_1 <= in_tlast;
             end
         end
     end
 
     // Outputs
-    assign out_tdata = reg_tdata;
+    assign out_tdata  = reg_tdata;
     assign out_tvalid = reg_tvalid;
     assign out_tlast = reg_tlast;
-    assign out_eth = reg_eth;
+    assign out_udp = reg_udp;
 
 endmodule
