@@ -83,14 +83,15 @@ module IPv4_Parser#(
                 reg_tdata <= in_tdata;
                 reg_tlast <= in_tlast;
 
-            if (beat_1) begin
-                reg_ipv4.version <= in_tdata[IPV4_VERSION_MSB:IPV4_VERSION_LSB];
-                reg_ipv4.ihl <= in_tdata[IPV4_IHL_MSB:IPV4_IHL_LSB];
-                reg_ipv4.length <= in_tdata[IPV4_TOTAL_LEN_MSB:IPV4_TOTAL_LEN_LSB];
-                reg_ipv4.protocol <= in_tdata[IPV4_PROTOCOL_MSB:IPV4_PROTOCOL_LSB];
-                reg_ipv4.src_ip <= in_tdata[IPV4_SRC_IP_MSB:IPV4_SRC_IP_LSB];
-                reg_ipv4.dst_ip <= in_tdata[IPV4_DST_IP_MSB:IPV4_DST_IP_LSB];
-            end
+                if (beat_1) begin
+                    reg_ipv4.version <= in_tdata[IPV4_VERSION_MSB:IPV4_VERSION_LSB];
+                    reg_ipv4.ihl <= in_tdata[IPV4_IHL_MSB:IPV4_IHL_LSB];
+                    reg_ipv4.length <= in_tdata[IPV4_TOTAL_LEN_MSB:IPV4_TOTAL_LEN_LSB];
+                    reg_ipv4.protocol <= in_tdata[IPV4_PROTOCOL_MSB:IPV4_PROTOCOL_LSB];
+                    reg_ipv4.src_ip <= in_tdata[IPV4_SRC_IP_MSB:IPV4_SRC_IP_LSB];
+                    reg_ipv4.dst_ip <= in_tdata[IPV4_DST_IP_MSB:IPV4_DST_IP_LSB];
+                end
+                
                 beat_1 <= in_tlast;
             end
         end

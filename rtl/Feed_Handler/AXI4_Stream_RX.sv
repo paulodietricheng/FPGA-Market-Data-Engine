@@ -36,7 +36,7 @@ module AXI4_Stream_RX #(parameter int BUS_W = 512)(
     input logic down_tready
 );
 
-    // Register variables
+    // AXI regs
     logic [BUS_W-1:0] reg_tdata;
     logic reg_tvalid, reg_tlast;
 
