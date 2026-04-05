@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 04/01/2026 09:28:41 AM
+// Create Date: 03/24/2026 02:56:57 PM
 // Design Name: 
-// Module Name: Payload_Extractor_128
+// Module Name: Payload_Extractor
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-module Payload_Extractor_128 #(
+module Payload_Extractor #(
     parameter int BUS_W = 512,
     parameter int ETHERNET_W = 112,
     parameter int IPv4_W = 160,
@@ -32,71 +32,85 @@ module Payload_Extractor_128 #(
     input logic in_tvalid,
     input logic in_tlast,
     output logic up_tready,
-
     output logic [MSG_W-1:0] out_messages [0:MAX_MSG-1],
     output logic [2:0] out_msg_count,
     output logic out_tvalid,
     output logic out_tlast,
-    input logic down_tready
+    input  logic down_tready
 );
-
-    // Payload starts after headers
     localparam int PAYLOAD_BEGIN = ETHERNET_W + IPv4_W + UDP_W;
+    localparam int CARRY_W = MSG_W - 1;
+    localparam int SLICE_W = CARRY_W + BUS_W;
+    localparam int TOT_W = 10;
+
+    logic accept;
+    assign up_tready = !out_tvalid || down_tready;
+    assign accept = up_tready && in_tvalid;
 
     logic beat_first;
-    logic [47:0] carry_data;  
-    logic [47:0] new_carry;
-    logic [MSG_W-1:0] out_messages_local [0:MAX_MSG-1];
+    logic [CARRY_W-1:0] carry_data;
+    logic [6:0] carry_bits;
+    logic [SLICE_W-1:0] reg_slice_window;
 
-    assign up_tready = !out_tvalid | down_tready;
+    logic [SLICE_W-1:0] slice_window;
+    logic [TOT_W-1:0] total_bits;
 
-    // Accept new input
-    logic accept;
-    assign accept = up_tready & in_tvalid;
-    
-    // Window registers
-    logic [BUS_W-1:0] window_slice;
-    logic [BUS_W-1:0] reg_slice;
-    
-    // Combinational window
     always_comb begin
         if (beat_first) begin
-            window_slice = BUS_W'(in_tdata[PAYLOAD_BEGIN+127:PAYLOAD_BEGIN]); 
+            slice_window = SLICE_W'(in_tdata[BUS_W-1:PAYLOAD_BEGIN]);
+            total_bits = TOT_W'(BUS_W - PAYLOAD_BEGIN);
         end else begin
-            window_slice = {in_tdata[463:0], carry_data}; // slide in previous carry
+            slice_window = (SLICE_W'(in_tdata) << carry_bits) | SLICE_W'(carry_data);
+            total_bits = TOT_W'(carry_bits) + TOT_W'(BUS_W);
         end
-        new_carry = in_tdata[511:464];
     end
-    
-    // Sequential latch
+
+    logic [2:0] msg_count_comb;
+    always_comb begin
+        msg_count_comb = 3'd0;
+        if (total_bits >= 10'd128)  msg_count_comb = 3'd1;
+        if (total_bits >= 10'd256) msg_count_comb = 3'd2;
+        if (total_bits >= 10'd384) msg_count_comb = 3'd3;
+        if (total_bits >= 10'd512) msg_count_comb = 3'd4;
+    end
+
+    logic [TOT_W-1:0] new_carry_bits_comb;
+    logic [CARRY_W-1:0] new_carry_data_comb;
+    always_comb begin
+        new_carry_bits_comb = total_bits - msg_count_comb * MSG_W;
+        new_carry_data_comb = in_tlast ? '0 : CARRY_W'(slice_window >> (msg_count_comb * MSG_W));
+    end
+
     always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             beat_first <= 1'b1;
-            carry_data <= 48'd0;
+            carry_data <= '0;
+            carry_bits <= 7'd0;
+            reg_slice_window <= '0;
             out_tvalid <= 1'b0;
             out_tlast <= 1'b0;
             out_msg_count <= 3'd0;
-            reg_slice <= '0;
-            for (int i = 0; i < MAX_MSG; i++) out_messages_local[i] <= '0;
-        end else if (accept) begin
-            beat_first <= in_tlast;
-            carry_data <= new_carry;
-            reg_slice <= window_slice;
-    
-            out_msg_count <= (beat_first) ? 3'd1 : 3'd4;
-            out_tvalid <= 1'b1;
-            out_tlast <= in_tlast;
         end else begin
-            out_tvalid <= 1'b0;
-            out_tlast <= 1'b0;
+            if (accept) begin
+                beat_first <= in_tlast;
+                carry_data <= new_carry_data_comb;
+                carry_bits <= in_tlast ? '0 : 7'(new_carry_bits_comb);
+                reg_slice_window <= slice_window;
+                out_tvalid <= (msg_count_comb > 0);
+                out_tlast <= in_tlast;
+                out_msg_count <= msg_count_comb;
+            end else if (down_tready && out_tvalid) begin
+                out_tvalid <= 1'b0;
+                out_tlast <= 1'b0;
+                out_msg_count <= 3'd0;
+            end
         end
     end
 
-    // Output assignment
-    genvar i;
     generate
+        genvar i;
         for (i = 0; i < MAX_MSG; i++) begin : GEN_OUT_MSG
-            assign out_messages[i] = reg_slice[(i+1)*MSG_W-1:i*MSG_W];
+            assign out_messages[i] = reg_slice_window[(i+1)*MSG_W-1 -: MSG_W];
         end
     endgenerate
 endmodule
