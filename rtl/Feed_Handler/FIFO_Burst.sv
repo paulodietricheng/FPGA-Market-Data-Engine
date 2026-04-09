@@ -56,17 +56,14 @@ module FIFO_Burst#(
     assign write = in_tvalid & up_tready;
     
     logic read;
-    assign read = down_tready && occupancy;
+    assign read = down_tready & (occupancy > 0);
     
     logic [1:0] reg_lane_idx;
     
     // BRAM signals
-    logic bram_wr_en, bram_rd_en;
-    assign bram_wr_en = write;
-    assign bram_rd_en = read;
     logic [ADDR_W-1:0] bram_wr_addr, bram_rd_addr; 
-    assign bram_wr_addr = ADDR_W'(wr_ptr);
-    assign bram_rd_addr = ADDR_W'(rd_ptr);
+    assign bram_wr_addr = wr_ptr[PTR_W-1:2];
+    assign bram_rd_addr = rd_ptr[PTR_W-1:2];
     logic [MSG_W-1:0] bram_rd_data [0:MAX_MSG-1];
     
     logic reg_valid;
@@ -79,15 +76,19 @@ module FIFO_Burst#(
                 .MSG_W(MSG_W),
                 .DEPTH(DEPTH)
             ) BRAM (
-                .wr_en(bram_wr_en),
+                .clk(clk),
+                .wr_en(write),
                 .wr_addr(bram_wr_addr),
                 .wr_data(in_messages[i]),
-                .rd_en(bram_rd_en),
+                .rd_en(read),
                 .rd_addr(bram_rd_addr),
                 .rd_data(bram_rd_data[i])
             );
         end
     endgenerate
+    
+    logic [1:0] rd_lane_now;
+    assign rd_lane_now = rd_ptr[1:0];
     
     // Update pointers
     always_ff @(posedge clk or negedge rst_n) begin
@@ -96,14 +97,13 @@ module FIFO_Burst#(
             rd_ptr <= 0;
             reg_valid <= 0;
             reg_lane_idx <= 0;
-        end else begin
-            if(write) begin
+        end else begin   
+            if (write)
                 wr_ptr <= wr_ptr + msg_c;
-            end
-            if(read) begin
-                reg_lane_idx <= rd_ptr[1:0];
-                rd_ptr += 1;
-                reg_valid <= bram_rd_en;
+    
+            if (read) begin
+                rd_ptr <= rd_ptr + 1;
+                reg_lane_idx <= rd_lane_now;
             end
         end
     end
@@ -118,6 +118,6 @@ module FIFO_Burst#(
         endcase
     end
     
-    assign out_tvalid = reg_valid;
+    assign out_tvalid = read;
     
 endmodule
