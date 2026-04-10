@@ -76,7 +76,7 @@ parameter int N = 8,
     genvar i;
     generate
         for (i = 0; i < N; i++) begin : GEN_LANES
-            Canonicalization_V2 #(
+            Canonicalization #(
                 .PRICE_W (PRICE_W),
                 .TIMESTAMP_W (TIMESTAMP_W),
                 .SIZE_W (SIZE_W),
@@ -91,13 +91,13 @@ parameter int N = 8,
                 .bid_out_quote_c (bid_quote_c[i])
             );
  
-            Score_V2 U_SCORE_BID (
+            Scoring U_SCORE_BID (
                 .in_quote_c (bid_quote_c[i]),
                 .in_lane_id (in_lane_id[i]),    
                 .out_score (bid_score[i])
             );
  
-            Score_V2 U_SCORE_ASK (
+            Scoring U_SCORE_ASK (
                 .in_quote_c (ask_quote_c[i]),
                 .in_lane_id (in_lane_id[i]),     
                 .out_score (ask_score[i])
