@@ -28,7 +28,6 @@ package Data_Structures;
         logic [31:0] price;
         logic signed [31:0] timestamp;
         logic [31:0] size;
-        logic [2:0] lane_id;
     } quote_t;  
     
     typedef struct packed {
