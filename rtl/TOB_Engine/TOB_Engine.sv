@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures_V2::*;
+import Data_Structures::*;
 
 module TOB_Engine #(
 parameter int N = 8,
