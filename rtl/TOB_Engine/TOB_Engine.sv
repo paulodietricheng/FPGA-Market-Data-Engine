@@ -19,15 +19,17 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures::*;
+import Data_Structures_V2::*;
 
 module TOB_Engine #(
-    parameter int N = 8,
+parameter int N = 8,
     parameter int RAW_DATA_W = 98,
     parameter int PRICE_W = 32,
     parameter int TIMESTAMP_W = 32,
     parameter int SIZE_W = 32,
     parameter int LANE_W = 3,
+    parameter int ORDER_ID_W = 29,
+    parameter int ORDER_TYPE_W = 2,
     parameter int BID = 1,
     parameter int ASK = 0
     )(
@@ -35,6 +37,8 @@ module TOB_Engine #(
         
         // Upstream
         input logic [RAW_DATA_W-1:0] in_data [N-1:0],
+        input logic [LANE_W-1:0] in_lane_id [N-1:0],
+        input logic lane_reset [N-1:0],
         
         // Outputs
         output quote_t best_bid,
@@ -42,37 +46,24 @@ module TOB_Engine #(
         output [PRICE_W:0] out_spread,
         output [PRICE_W-1:0] out_mid,
         output logic out_cross,     
-        output logic out_lock
+        output logic out_lock,
+        output logic out_lane_tvalid [0:N-1]
     );
     
-    // Input Buffer
-    logic [RAW_DATA_W-1:0] ib_out_data [N-1:0];
-    
-    // Decoder
-    quote_t decoded [N-1:0];
-    
-    // Filter
-    quote_t filtered [N-1:0];
-    
     // Canonicalization
-    quote_t ask_quote [N-1:0];
-    quote_t bid_quote [N-1:0];   
+    logic [LANE_W-1:0] out_lane_id [N-1:0];
     quote_t ask_quote_c [N-1:0];
     quote_t bid_quote_c [N-1:0];  
     
     // Scoring  
     score_t ask_score [N-1:0];
     score_t bid_score [N-1:0];
-    quote_t bid_quote_scored [N-1:0];
-    quote_t ask_quote_scored [N-1:0];
     
     // Bid Arbiter
     quote_t bid_winner_quote;
-    score_t bid_winner_score;
 
     // Ask Arbiter
     quote_t ask_winner_quote;
-    score_t ask_winner_score;
     
     // Signal generator
     quote_t TOB_ASK, TOB_BID;
@@ -85,58 +76,31 @@ module TOB_Engine #(
     genvar i;
     generate
         for (i = 0; i < N; i++) begin : GEN_LANES
-            
-            Input_Buffer #(
-                .RAW_DATA_W(RAW_DATA_W)
-            ) U_IB (
-                .clk(clk),
-                .rst_n(rst_n),
-                .in_data(in_data[i]),
-                .out_data(ib_out_data[i])
-            );
-            
-            Decoder #(
-                .RAW_DATA_W(RAW_DATA_W),
-                .PRICE_W(PRICE_W),
-                .TIMESTAMP_W(TIMESTAMP_W),
-                .SIZE_W(SIZE_W),
-                .LANE_W(LANE_W)
-            ) U_DECODER (
-                .in_data(ib_out_data[i]),
-                .lane_id(i[LANE_W-1:0]),
-                .out_quote(decoded[i])
-            );
-
-            Filter U_FILTER (
-                .clk(clk),
-                .rst_n(rst_n),
-                .in_quote(decoded[i]),
-                .out_quote(filtered[i])
-            );
-
-            Canonicalization  #(
-                .PRICE_W(PRICE_W),
-                .TIMESTAMP_W(TIMESTAMP_W),
-                .SIZE_W(SIZE_W),
-                .LANE_W(LANE_W),
-                .BID(BID),
-                .ASK(ASK)
+            Canonicalization_V2 #(
+                .PRICE_W (PRICE_W),
+                .TIMESTAMP_W (TIMESTAMP_W),
+                .SIZE_W (SIZE_W),
+                .LANE_W (LANE_W),
+                .BID (BID),
+                .ASK (ASK)
             ) U_CANON (
-                .clk(clk),
-                .rst_n(rst_n),
-                .in_quote(filtered[i]),
-                .ask_out_quote_c(ask_quote_c[i]),
-                .bid_out_quote_c(bid_quote_c[i])
+                .in_quote (in_data[i]),
+                .lane_reset (lane_reset[i]),
+                .out_lane_tvalid (out_lane_tvalid[i]),
+                .ask_out_quote_c (ask_quote_c[i]),
+                .bid_out_quote_c (bid_quote_c[i])
             );
-
-            Scoring U_SCORE_BID (
-                .in_quote_c(bid_quote_c[i]),
-                .out_score(bid_score[i])
+ 
+            Score_V2 U_SCORE_BID (
+                .in_quote_c (bid_quote_c[i]),
+                .in_lane_id (in_lane_id[i]),    
+                .out_score (bid_score[i])
             );
-
-            Scoring U_SCORE_ASK (
-                .in_quote_c(ask_quote_c[i]),
-                .out_score(ask_score[i])
+ 
+            Score_V2 U_SCORE_ASK (
+                .in_quote_c (ask_quote_c[i]),
+                .in_lane_id (in_lane_id[i]),     
+                .out_score (ask_score[i])
             );
         end
     endgenerate
@@ -179,3 +143,4 @@ module TOB_Engine #(
     assign out_lock = _lock;
     
 endmodule
+
