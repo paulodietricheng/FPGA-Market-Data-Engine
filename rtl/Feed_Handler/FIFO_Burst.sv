@@ -49,7 +49,7 @@ module FIFO_Burst#(
     logic unsigned [PTR_W-1:0] occupancy;
     assign occupancy = wr_ptr - rd_ptr;
     
-    assign up_tready = (occupancy <= (DEPTH - MAX_MSG));
+    assign up_tready = (occupancy < (DEPTH - MAX_MSG));
     
     // Control   
     logic write;
@@ -65,9 +65,7 @@ module FIFO_Burst#(
     assign bram_wr_addr = wr_ptr[PTR_W-1:2];
     assign bram_rd_addr = rd_ptr[PTR_W-1:2];
     logic [MSG_W-1:0] bram_rd_data [0:MAX_MSG-1];
-    
-    logic reg_valid;
-    
+       
     // Generate BRAM
     genvar i;
     generate 
@@ -89,6 +87,7 @@ module FIFO_Burst#(
     
     logic [1:0] rd_lane_now;
     assign rd_lane_now = rd_ptr[1:0];
+    logic reg_valid;
     
     // Update pointers
     always_ff @(posedge clk or negedge rst_n) begin
@@ -98,6 +97,7 @@ module FIFO_Burst#(
             reg_valid <= 0;
             reg_lane_idx <= 0;
         end else begin   
+            reg_valid <= read;
             if (write)
                 wr_ptr <= wr_ptr + msg_c;
     
@@ -118,6 +118,6 @@ module FIFO_Burst#(
         endcase
     end
     
-    assign out_tvalid = read;
+    assign out_tvalid = reg_valid;
     
 endmodule

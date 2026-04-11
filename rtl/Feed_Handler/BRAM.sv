@@ -20,21 +20,20 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-module bram_sdp #(
+module BRAM #(
     parameter int MSG_W = 128,  
-    parameter int DEPTH = 32,
-    localparam ADDR_W = $clog2(DEPTH)
+    parameter int DEPTH = 32
 )(
     input logic clk, // Signals
  
     // Upstream 
     input logic wr_en,
-    input logic [ADDR_W-1:0] wr_addr,
+    input logic [$clog2(DEPTH)-1:0] wr_addr,
     input logic [MSG_W-1:0] wr_data,
- 
+
     // Downstream
     input logic rd_en,
-    input logic [ADDR_W-1:0] rd_addr,
+    input logic [$clog2(DEPTH)-1:0] rd_addr,
     output logic [MSG_W-1:0] rd_data
 );
     (* ram_style = "block" *)
