@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 /////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures_V2::*;
+import Data_Structures::*;
 
 module FPGA_Market_Data_Engine #(
     parameter int BUS_W = 512,
@@ -117,7 +117,7 @@ module FPGA_Market_Data_Engine #(
     logic payload_tvalid;
     logic payload_up_tready;
 
-    Payload_Extractor_128 #(
+    Payload_Extractor #(
         .BUS_W (BUS_W),
         .ETHERNET_W (ETHERNET_W),
         .IPv4_W (IPv4_W),
@@ -233,7 +233,7 @@ module FPGA_Market_Data_Engine #(
         end
     endgenerate
 
-    Pure_TOB_Engine #(
+    TOB_Engine #(
         .N (N),
         .RAW_DATA_W (RAW_DATA_W),
         .PRICE_W (PRICE_W),
