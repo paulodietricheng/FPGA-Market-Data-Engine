@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 02/18/2026 06:26:21 AM
+// Create Date: 04/10/2026 05:12:43 PM
 // Design Name: 
-// Module Name: Data_Structures
+// Module Name: Data_Structures_V2
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -20,13 +20,12 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
-package Data_Structures;
-
+package Data_Structures_V2;
     typedef struct packed {
         logic valid;
         logic side;
         logic [31:0] price;
-        logic signed [31:0] timestamp;
+        logic [31:0] timestamp;
         logic [31:0] size;
     } quote_t;  
     
@@ -37,5 +36,4 @@ package Data_Structures;
         logic [2:0] lane_id;
         logic [31:0] size;
     } score_t;
-    
 endpackage

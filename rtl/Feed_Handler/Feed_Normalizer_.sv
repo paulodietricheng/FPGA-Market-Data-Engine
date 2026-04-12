@@ -33,7 +33,6 @@ module Feed_Normalizer #(
     // Upstream
     input logic [MSG_W-1:0] in_data,
     input logic in_tvalid,
-    input logic [LANE_W-1:0] lane_id,
     output logic up_tready,
 
     // Downstream

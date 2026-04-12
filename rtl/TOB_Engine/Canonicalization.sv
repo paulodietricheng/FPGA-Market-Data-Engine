@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 02/18/2026 09:43:38 AM
+// Create Date: 04/10/2026 05:53:57 PM
 // Design Name: 
-// Module Name: Canonicalization
+// Module Name: Canonicalization_V2
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,9 +19,9 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures::*;
+import Data_Structures_V2::*;
 
-module Canonicalization #(
+module Canonicalization_V2 #(
     parameter int PRICE_W = 32,
     parameter int TIMESTAMP_W = 32,
     parameter int SIZE_W = 32,

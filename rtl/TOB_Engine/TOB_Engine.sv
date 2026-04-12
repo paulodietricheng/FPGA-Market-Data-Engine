@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date: 02/24/2026 02:19:36 PM
+// Create Date: 04/09/2026 12:30:17 PM
 // Design Name: 
-// Module Name: Top_Module_PIP
+// Module Name: Pure_TOB_Engine
 // Project Name: 
 // Target Devices: 
 // Tool Versions: 
@@ -19,10 +19,10 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures::*;
+import Data_Structures_V2::*;
 
-module TOB_Engine #(
-parameter int N = 8,
+module Pure_TOB_Engine #(
+    parameter int N = 8,
     parameter int RAW_DATA_W = 98,
     parameter int PRICE_W = 32,
     parameter int TIMESTAMP_W = 32,
@@ -38,7 +38,7 @@ parameter int N = 8,
         // Upstream
         input logic [RAW_DATA_W-1:0] in_data [N-1:0],
         input logic [LANE_W-1:0] in_lane_id [N-1:0],
-        input logic lane_reset [N-1:0],
+        input logic [N-1:0] lane_reset,
         
         // Outputs
         output quote_t best_bid,
@@ -47,7 +47,7 @@ parameter int N = 8,
         output [PRICE_W-1:0] out_mid,
         output logic out_cross,     
         output logic out_lock,
-        output logic out_lane_tvalid [0:N-1]
+        output logic [N-1:0] out_lane_tvalid
     );
     
     // Canonicalization
@@ -76,7 +76,7 @@ parameter int N = 8,
     genvar i;
     generate
         for (i = 0; i < N; i++) begin : GEN_LANES
-            Canonicalization #(
+            Canonicalization_V2 #(
                 .PRICE_W (PRICE_W),
                 .TIMESTAMP_W (TIMESTAMP_W),
                 .SIZE_W (SIZE_W),
@@ -91,13 +91,13 @@ parameter int N = 8,
                 .bid_out_quote_c (bid_quote_c[i])
             );
  
-            Scoring U_SCORE_BID (
+            Score_V2 U_SCORE_BID (
                 .in_quote_c (bid_quote_c[i]),
                 .in_lane_id (in_lane_id[i]),    
                 .out_score (bid_score[i])
             );
  
-            Scoring U_SCORE_ASK (
+            Score_V2 U_SCORE_ASK (
                 .in_quote_c (ask_quote_c[i]),
                 .in_lane_id (in_lane_id[i]),     
                 .out_score (ask_score[i])

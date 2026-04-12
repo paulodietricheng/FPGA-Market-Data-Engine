@@ -22,7 +22,7 @@
 import Data_Structures_V2::*;
  
 module Lane_Management_Engine #(
-    parameter int N =8,
+    parameter int N = 8,
     parameter int ORDER_ID_W = 29,
     parameter int ORDER_TYPE_W = 2,
     parameter int AGE_TIMEOUT = 300
@@ -88,12 +88,23 @@ module Lane_Management_Engine #(
         end
     end
     
-        // Invalidate stale orders
+    // Invalidate stale orders
     logic [N-1:0] age_reset;
+    logic [31:0] age_delta [N-1:0];
+    
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            for (int i = 0; i < N; i++)
+                age_delta[i] <= '0;
+        end else begin
+            for (int i = 0; i < N; i++)
+                age_delta[i] <= curr_time - reg_quote[i].timestamp;
+        end
+    end
  
     always_comb begin
         for (int i = 0; i < N; i++) begin
-            age_reset[i] = lane_valid[i] & ((curr_time - reg_quote[i].timestamp) > AGE_TIMEOUT);
+            age_reset[i] = lane_valid[i] & (age_delta[i] > AGE_TIMEOUT);
         end
     end
  
