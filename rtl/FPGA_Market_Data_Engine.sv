@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 /////////////////////////////////////////////////////////////////////////////////
 
-import Data_Structures::*;
+import Data_Structures_V2::*;
 
 module FPGA_Market_Data_Engine #(
     parameter int BUS_W = 512,
@@ -85,6 +85,13 @@ module FPGA_Market_Data_Engine #(
     logic [BUS_W-1:0] udp_tdata;
     logic udp_tvalid, udp_tlast;
     logic udp_up_tready; 
+    
+    logic reg_udp_up_tready;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) reg_udp_up_tready <= 1'b0;
+        else reg_udp_up_tready <= udp_up_tready;
+    end 
 
     UDP_Parser #(
         .BUS_W (BUS_W),
@@ -101,7 +108,7 @@ module FPGA_Market_Data_Engine #(
         .out_tvalid (udp_tvalid),
         .out_tlast (udp_tlast),
         .out_udp (/* udp_hdr unused in top - port filtering omitted */),
-        .down_tready (udp_up_tready)
+        .down_tready (reg_udp_up_tready)
     );
 
     // Payload Extractor
@@ -110,7 +117,7 @@ module FPGA_Market_Data_Engine #(
     logic payload_tvalid;
     logic payload_up_tready;
 
-    Payload_Extractor #(
+    Payload_Extractor_128 #(
         .BUS_W (BUS_W),
         .ETHERNET_W (ETHERNET_W),
         .IPv4_W (IPv4_W),
@@ -164,6 +171,8 @@ module FPGA_Market_Data_Engine #(
         .TIMESTAMP_W (TIMESTAMP_W),
         .SIZE_W (SIZE_W)
     ) U_NORM (
+        .clk(clk),
+        .rst_n(rst_n),
         .in_data (fifo_out_message),
         .in_tvalid (fifo_out_tvalid),
         .up_tready (1'b1),
@@ -177,7 +186,7 @@ module FPGA_Market_Data_Engine #(
     logic [ORDER_ID_W-1:0] filt_order_id;
     logic [ORDER_TYPE_W-1:0] filt_order_type;
 
-    Filter #(
+    Filter_V2 #(
         .ORDER_ID_W (ORDER_ID_W),
         .ORDER_TYPE_W (ORDER_TYPE_W)
     ) U_FILTER (
@@ -224,7 +233,7 @@ module FPGA_Market_Data_Engine #(
         end
     endgenerate
 
-    TOB_Engine #(
+    Pure_TOB_Engine #(
         .N (N),
         .RAW_DATA_W (RAW_DATA_W),
         .PRICE_W (PRICE_W),

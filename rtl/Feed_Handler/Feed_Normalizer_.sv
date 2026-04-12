@@ -30,6 +30,7 @@ module Feed_Normalizer #(
     parameter int TIMESTAMP_W = 32,
     parameter int SIZE_W = 32
 )(
+    input logic clk, rst_n, // Signals
     // Upstream
     input logic [MSG_W-1:0] in_data,
     input logic in_tvalid,
@@ -54,17 +55,26 @@ module Feed_Normalizer #(
     localparam int SIZE_MSB = TIME_LSB - 1; // 31
     localparam int SIZE_LSB = SIZE_MSB - (SIZE_W - 1); // 0
 
+    // Register Variables
+    logic [ORDER_ID_W-1:0] reg_order_id;
+    logic [ORDER_TYPE_W-1:0] reg_order_type;
+    quote_t reg_quote;    
+    
     // Field extraction
-    assign order_type = in_data[TYPE_MSB:TYPE_LSB];
-    assign order_id = in_data[ID_MSB:ID_LSB];
-
-    // Struct population
-    always_comb begin
-        out_quote.valid = in_tvalid;
-        out_quote.side = in_data[SIDE_BIT];
-        out_quote.price = in_data[PRICE_MSB:PRICE_LSB];
-        out_quote.timestamp = in_data[TIME_MSB:TIME_LSB];
-        out_quote.size = in_data[SIZE_MSB:SIZE_LSB];
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            reg_order_id <= '0;
+            reg_order_type <= '0;
+            reg_quote.valid <= 1'b0;    
+        end else begin 
+            order_type <= in_data[TYPE_MSB:TYPE_LSB];
+            order_id <= in_data[ID_MSB:ID_LSB];
+            out_quote.valid <= in_tvalid;
+            out_quote.side <= in_data[SIDE_BIT];
+            out_quote.price <= in_data[PRICE_MSB:PRICE_LSB];
+            out_quote.timestamp <= in_data[TIME_MSB:TIME_LSB];
+            out_quote.size <= in_data[SIZE_MSB:SIZE_LSB];
+        end
     end
 
     assign up_tready = 1'b1;
