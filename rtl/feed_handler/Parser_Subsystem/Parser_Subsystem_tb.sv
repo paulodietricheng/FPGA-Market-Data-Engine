@@ -1,10 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
 // Testbench : tb_Parser_Subsystem
-// DUT       : Parser_Subsystem
-//
-// Sends one minimal Ethernet/IPv4/UDP packet (fits in a single 512-bit beat)
-// and verifies that every parsed header field matches the expected value.
+// DUT : Parser_Subsystem
 //////////////////////////////////////////////////////////////////////////////////
  
 import Data_Structures::*;
@@ -13,7 +10,7 @@ module tb_Parser_Subsystem;
  
     // Parameters
     localparam int BUS_W = 512;
-    localparam int CLK_HALF = 5;        // 10 ns clock period
+    localparam int CLK_HALF = 5; // 10 ns clock period
  
     // DUT signals
     logic clk, rst_n;
@@ -51,14 +48,14 @@ module tb_Parser_Subsystem;
     // Expected values
     localparam logic [47:0] EXP_DST_MAC = 48'hAABBCCDDEEFF;
     localparam logic [47:0] EXP_SRC_MAC = 48'h001122334455;
-    localparam logic [15:0] EXP_ETH_TYPE = 16'h0800;          // IPv4
+    localparam logic [15:0] EXP_ETH_TYPE = 16'h0800; // IPv4
  
     localparam logic [3:0]  EXP_VERSION = 4'h4;
     localparam logic [3:0]  EXP_IHL = 4'h5;
     localparam logic [15:0] EXP_IP_LEN = 16'd40;
-    localparam logic [7:0]  EXP_PROTOCOL = 8'd17;             // UDP
-    localparam logic [31:0] EXP_SRC_IP = 32'hC0A80101;     // 192.168.1.1
-    localparam logic [31:0] EXP_DST_IP = 32'hC0A80102;     // 192.168.1.2
+    localparam logic [7:0]  EXP_PROTOCOL = 8'd17; // UDP
+    localparam logic [31:0] EXP_SRC_IP = 32'hC0A80101;    
+    localparam logic [31:0] EXP_DST_IP = 32'hC0A80102; 
  
     localparam logic [15:0] EXP_SRC_PORT = 16'd1234;
     localparam logic [15:0] EXP_DST_PORT = 16'd5678;
