@@ -50,10 +50,10 @@ module tb_Parser_Subsystem;
     localparam logic [47:0] EXP_SRC_MAC = 48'h001122334455;
     localparam logic [15:0] EXP_ETH_TYPE = 16'h0800; // IPv4
  
-    localparam logic [3:0]  EXP_VERSION = 4'h4;
-    localparam logic [3:0]  EXP_IHL = 4'h5;
+    localparam logic [3:0] EXP_VERSION = 4'h4;
+    localparam logic [3:0] EXP_IHL = 4'h5;
     localparam logic [15:0] EXP_IP_LEN = 16'd40;
-    localparam logic [7:0]  EXP_PROTOCOL = 8'd17; // UDP
+    localparam logic [7:0] EXP_PROTOCOL = 8'd17; // UDP
     localparam logic [31:0] EXP_SRC_IP = 32'hC0A80101;    
     localparam logic [31:0] EXP_DST_IP = 32'hC0A80102; 
  

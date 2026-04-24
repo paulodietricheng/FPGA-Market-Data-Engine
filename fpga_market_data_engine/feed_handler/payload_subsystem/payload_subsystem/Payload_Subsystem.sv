@@ -108,24 +108,9 @@ module Payload_Subsystem #(
         .in_data(out_message_fifo),
         .in_tvalid(out_tvalid_fifo),
         .up_tready(up_tready_decoder),
-        .out_quote(out_quote_dec),
-        .order_id(order_id_dec),
-        .order_type(order_type_dec)
-    );
-
-    // Filter   
-    Filter #(
-        .ORDER_ID_W(ORDER_ID_W),
-        .ORDER_TYPE_W(ORDER_TYPE_W)
-    ) U_Filter (
-        .clk(clk),
-        .rst_n(rst_n),
-        .in_order_id(order_id_dec),
-        .in_order_type(order_type_dec),
-        .in_quote(out_quote_dec),
-        .out_order_id(out_order_id),
-        .out_order_type(out_order_type),
-        .out_quote(out_quote)
+        .out_quote(out_quote),
+        .order_id(out_order_id),
+        .order_type(out_order_type)
     );
 
 endmodule

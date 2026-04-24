@@ -53,9 +53,7 @@ module FPGA_Market_Data_Engine #(
 
     // Lane Management to Computer wires
     quote_t lme_quote [N-1:0];
-    logic [$clog2(N)-1:0] lme_lane_idx [N-1:0];
-
-    logic [$clog2(N)-1:0] comp_lane_idx [N-1:0];
+    logic [$clog2(N)-1:0] lane_idx [N-1:0];
 
     // Feed Handler
     Feed_Handler #(
@@ -85,7 +83,7 @@ module FPGA_Market_Data_Engine #(
         .in_order_id(fh_order_id),
         .in_order_type(fh_order_type),
         .out_quote(lme_quote),
-        .out_lane_idx(lme_lane_idx)
+        .out_lane_idx(lane_idx)
     );
 
     // Computer
@@ -98,7 +96,7 @@ module FPGA_Market_Data_Engine #(
         .clk(clk),
         .rst_n(rst_n),
         .in_data(lme_quote),
-        .lane_idx(comp_lane_idx),
+        .lane_idx(lane_idx),
         .best_bid(best_bid),
         .best_ask(best_ask),
         .out_spread(out_spread),

@@ -1,7 +1,7 @@
 `timescale 1ns / 1ps
 //////////////////////////////////////////////////////////////////////////////////
-// Testbench : tb_FIFO
-// DUT : FIFO
+// Testbench : tb_FIFO_PAULO
+// DUT : FIFO_PAULO
 //////////////////////////////////////////////////////////////////////////////////
 
 module tb_FIFO;
@@ -91,14 +91,12 @@ module tb_FIFO;
         in_tvalid = 1'b0;
     endtask
 
-    task automatic pop_and_check(
-        input string name,
-        input logic [MSG_W-1:0] exp
-    );
+    task automatic pop_and_check(input string name, input logic [MSG_W-1:0] exp);
         while (!out_tvalid) @(posedge clk);
         down_tready = 1'b1;
-        @(posedge clk);
+        @(negedge clk);           // sample in the middle of the cycle, before posedge updates rd_ptr
         check(name, out_message, exp);
+        @(posedge clk);
         down_tready = 1'b0;
     endtask
     
@@ -125,10 +123,10 @@ module tb_FIFO;
             push1(A);
             pop_and_check("pop A", A);
         end
-
+        
         reset_dut();
 
-        // Test 2: Push 4, Pop 4 
+        // Test 2: Push 4, Pop 4
         $display("\n=== Test 2: Push 4 / Pop 4 ===");
 
         begin
@@ -146,7 +144,7 @@ module tb_FIFO;
         end
 
         reset_dut();
-    
+
         // Test 3: Mixed push (1 + 4)
         $display("\n=== Test 3: Mixed Push ===");
 
@@ -167,7 +165,7 @@ module tb_FIFO;
             pop_and_check("pop E", E);
         end
 
-        // Test 4: Backpressure 
+        // Test 4: Backpressure (stall output)
         $display("\n=== Test 4: Backpressure ===");
 
         begin
@@ -186,23 +184,23 @@ module tb_FIFO;
         end
         
         reset_dut();
-
         // Test 5: Wraparound
         $display("\n=== Test 5: Wraparound ===");
         begin
-            // Push 28 entries
+
+            // Phase 1: push 28 entries
             for (int i = 0; i < 7; i++)
                 push4(4*i, 4*i+1, 4*i+2, 4*i+3);
         
-            // Pop 16 entries
+            // Phase 2: pop 16 entries
             for (int i = 0; i < 16; i++)
                 pop_and_check($sformatf("wrap pop %0d", i), i);
         
-            // Push 16 more entries: wr_ptr wraps
+            // Phase 3: push 16 more entries. wr_ptr wraps through 32 to 0
             for (int i = 7; i < 11; i++)
                 push4(4*i, 4*i+1, 4*i+2, 4*i+3);
         
-            // Drain
+            // Phase 4: drain the rest
             for (int i = 16; i < 44; i++)
                 pop_and_check($sformatf("wrap pop %0d", i), i);
         end

@@ -24,7 +24,7 @@
 
 import Data_Structures::*;
 
-module tb_Lane_Management_Engine_Paulo_V2;
+module tb_Lane_Management_Engine_PIP;
 
     // Parameters
     localparam int N = 8;
@@ -44,7 +44,7 @@ module tb_Lane_Management_Engine_Paulo_V2;
     logic [$clog2(N)-1:0] out_lane_idx [N-1:0];
 
     // DUT
-    Lane_Management_Engine #(
+    Lane_Management_Engine_PIP #(
         .N(N),
         .ORDER_ID_W(ORDER_ID_W),
         .ORDER_TYPE_W(ORDER_TYPE_W),
