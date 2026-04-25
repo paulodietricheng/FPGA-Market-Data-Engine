@@ -49,7 +49,7 @@ Maintains **8 parallel lanes** of active orders in registers. Incoming messages 
 according to their type:
 
 - `QUOTE` — allocated to the first free lane
-- `FILL` / `CANCEL` — matched to a lane by `order_id` via one-hot comparison and invalidated
+- `FILL` / `CANCEL` — matched to a lane by `order_id` via one-hot comparison and the corresponding lane is set to '0
 - Stale orders are evicted automatically when `age_delta > AGE_TIMEOUT` (default: 300 cycles)
 
 ### 3. Computer
