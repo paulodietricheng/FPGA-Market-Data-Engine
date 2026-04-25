@@ -30,7 +30,7 @@ cycles + a fifo** at **211 MHz**.
      Show the 512-bit AXI bus entering Feed Handler and the signal outputs
      (cross, lock, spread, midpoint) leaving Computer.
      Suggested filename: docs/images/architecture_overview.png -->
-![Architecture Overview](docs/images/FPGA_MDE_Top_BD.drawio)
+![Architecture Overview](docs/images/FPGA_MDE_Top_BD.drawio.png)
 
 The pipeline is divided into three major sections:
 
