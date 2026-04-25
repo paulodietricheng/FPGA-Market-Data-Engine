@@ -1,5 +1,7 @@
 # FPGA Market Data Engine
 
+Current state: Every module works individually. Debugging top module assembly.
+
 A fully pipelined, low-latency market data processing engine implemented in SystemVerilog,
 targeting the **Xilinx Artix-7 XC7A200T** FPGA. The system ingests raw Ethernet frames over
 a 512-bit AXI-Stream bus, strips network headers, extracts and decodes market order messages,
