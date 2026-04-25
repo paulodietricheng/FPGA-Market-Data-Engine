@@ -53,7 +53,7 @@ according to their type:
 - Stale orders are evicted automatically when `age_delta > AGE_TIMEOUT` (default: 300 cycles)
 
 ### 3. Computer
-Processes all 8 lanes in parallel:
+Processes all 8 lanes in parallel, building on my other repo [Top-of-Book-FPGA-Engine](https://github.com/paulodietricheng/Top-of-Book-FPGA-Engine.git)
 
 - **Canonicalization:** timestamps are bitwise-inverted on all quotes. Ask prices are also bitwise-inverted. Bids and asks are
   split into separate streams.
