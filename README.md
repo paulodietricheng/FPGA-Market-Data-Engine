@@ -10,16 +10,16 @@ cycles + a fifo** at **211 MHz**.
 
 ## Performance
 
-| Metric           | Value               |
-|------------------|---------------------|
-| FPGA             | XC7A200T-FFG1156-2L |
-| Fmax             | 211.1 MHz           |
-| Pipeline Latency | 12 cycles           |
-| AXI Stream Width | 512-bit             |
-| FIFO Depth       | 32                  |
-| LUT Usage        | 4,540               |
-| FF Usage         | 6,891               |
-| BRAM             | 8                   |
+| Metric                 | Value               |
+|------------------------|---------------------|
+| FPGA                   | XC7A200T-FFG1156-2L |
+| Fmax                   | 211.1 MHz           |
+| AXI Stream Width       | 512-bit             |
+| Fixed Pipeline Latency | 12 cycles           |
+| FIFO Depth             | 32                  |
+| LUT Usage              | 4,540               |
+| FF Usage               | 6,891               |
+| BRAM                   | 8                   |
 
 ---
 
@@ -41,8 +41,8 @@ a sliding window across all beats, stitching carry-over bits with incoming data 
 continuously produce **4 aligned 128-bit messages per cycle**, rate-matches the 4 messages per
 cycle to 1 message per cycle using a burst FIFO, and the messaes are decoded into `order_type`, 
 `order_id`, `side`, `price`, `timestamp`, and `size`. 
-For more details about this block, check docs!
 
+![Feed Handler Diagram](docs/images/FPGA_MDE_FH.drawio.png)
 
 ### 2. Lane Management Engine
 Maintains **8 parallel lanes** of active orders in registers. Incoming messages are handled
